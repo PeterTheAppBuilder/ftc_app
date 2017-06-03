@@ -53,6 +53,13 @@ public class Main extends OpMode {
   DcMotor motorTR;
   DcMotor motorBL;
   DcMotor motorBR;
+
+
+
+
+
+  //////////////////////////////////////////////////////////////////
+
   @Override
   public void init() {
     motorTL = hardwareMap.dcMotor.get("motorTL");
@@ -98,18 +105,20 @@ public class Main extends OpMode {
    */
   @Override
   public void loop() {
+    Movement();
+  }
 
+  public void Movement(){
     float turnAmount = gamepad1.left_stick_x;
     if(turnAmount>0){
-      turnAmount = (float) Math.pow(turnAmount,1.5);
+      turnAmount = (float) Math.pow(Math.abs(turnAmount),1.5);
     }else{
-      turnAmount = (float) -Math.pow(turnAmount,1.5);
+      turnAmount = (float) -Math.pow(Math.abs(turnAmount),1.5);
     }
     turnAmount *=turnScale;
     motorTL.setPower(gamepad1.right_stick_y-turnAmount +gamepad1.right_stick_x);
     motorBL.setPower(gamepad1.right_stick_y-turnAmount-gamepad1.right_stick_x);
     motorBR.setPower(gamepad1.right_stick_y+turnAmount+gamepad1.right_stick_x);
     motorTR.setPower(gamepad1.right_stick_y+turnAmount-gamepad1.right_stick_x);
-
   }
 }
