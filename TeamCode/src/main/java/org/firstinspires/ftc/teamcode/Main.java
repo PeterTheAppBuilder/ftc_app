@@ -31,13 +31,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.robotcontroller.internal.FtcRobotControllerActivity;
+
+import ftc.vision.FrameGrabber;
 
 /**
  * Demonstrates empty OpMode
@@ -49,11 +50,13 @@ public class Main extends OpMode {
   /////////////////////////////////VARS////////////////////////////
   public final float turnScale = 1.0f;
 
-  DcMotor motorTL;
-  DcMotor motorTR;
-  DcMotor motorBL;
-  DcMotor motorBR;
-
+    DcMotor motorTL;
+    DcMotor motorTR;
+    DcMotor motorBL;
+    DcMotor motorBR;
+    float movement_y = 0;
+    float movement_x = 0;
+    float movement_turn = 0;
 
 
 
@@ -88,6 +91,7 @@ public class Main extends OpMode {
   @Override
   public void init_loop() {
 
+
   }
 
   /*
@@ -103,22 +107,42 @@ public class Main extends OpMode {
    * This method will be called repeatedly in a loop
    * @see com.qualcomm.robotcore.eventloop.opmode.OpMode#loop()
    */
-  @Override
-  public void loop() {
-    Movement();
+    @Override
+    public void loop() {
+
+        MovementCalc();
+
+        if(FrameGrabber.bestBallX!=-1){
+            //movement_y = 0.2f;
+            if(FrameGrabber.bestBallX > 864/2){
+                movement_turn = -0.1f;
+            }else{
+                movement_turn = 0.1f;
+            }
+        }
+
+
+
+        ApplyMovement();
+    }
+
+  public void MovementCalc(){
+      movement_turn = gamepad1.left_stick_x;
+    if(movement_turn>0){
+        movement_turn = (float) Math.pow(Math.abs(movement_turn),1.5);
+    }else{
+        movement_turn = (float) -Math.pow(Math.abs(movement_turn),1.5);
+    }
+      movement_turn *=turnScale;
+      movement_y = gamepad1.right_stick_y;
+      movement_x = gamepad1.right_stick_x;
   }
 
-  public void Movement(){
-    float turnAmount = gamepad1.left_stick_x;
-    if(turnAmount>0){
-      turnAmount = (float) Math.pow(Math.abs(turnAmount),1.5);
-    }else{
-      turnAmount = (float) -Math.pow(Math.abs(turnAmount),1.5);
-    }
-    turnAmount *=turnScale;
-    motorTL.setPower(gamepad1.right_stick_y-turnAmount +gamepad1.right_stick_x);
-    motorBL.setPower(gamepad1.right_stick_y-turnAmount-gamepad1.right_stick_x);
-    motorBR.setPower(gamepad1.right_stick_y+turnAmount+gamepad1.right_stick_x);
-    motorTR.setPower(gamepad1.right_stick_y+turnAmount-gamepad1.right_stick_x);
+
+  public void ApplyMovement(){
+      motorTL.setPower(movement_y-movement_turn +movement_x);
+      motorBL.setPower(movement_y-movement_turn-movement_x);
+      motorBR.setPower(movement_y+movement_turn+movement_x);
+      motorTR.setPower(movement_y+movement_turn-movement_x);
   }
 }

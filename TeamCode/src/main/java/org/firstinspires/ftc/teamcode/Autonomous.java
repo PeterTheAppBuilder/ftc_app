@@ -76,6 +76,11 @@ import com.qualcomm.robotcore.util.Range;
 
 public class Autonomous extends OpMode
 {
+    boolean debugMode = false;
+
+
+
+
     ////////////////////DEFINE VARIABLES//////////////////////////////////////
 
 
@@ -183,6 +188,7 @@ public class Autonomous extends OpMode
         turnn1,
         turnn2,
         move_vortex,
+
         align_wall,
         wait_unlodge,
         unlodge,
@@ -190,24 +196,33 @@ public class Autonomous extends OpMode
         //move_to_line1,
         read_beacon1,
         waitfordeploy1,
+        //debugWaitColor,
         go_to_beacon1,
         press_beacon1,
         start_shooter,
         reload1,
         driveToBeacon2,
         //move_to_line2,
+        //debugWait1,
+
         read_beacon2,
+        //debugWait2,
         //movenBall1,
         wait2,
         //turnnBall1,
         //turnnBall2,
         //turnnBallLast,
         go_to_beacon2,
+        //debugWait3,
         waitfordeploy2,
         press_beacon2,
+        //debugWait4,
         retractServo2,
         turn_to_center_vortex,
+        //debugWait5,
+
         wait_before_final_turn,
+        //debugWait6,
         finish_turn_to_center_vortex,
         move_before_shooting,
         aim1,
@@ -523,7 +538,7 @@ public class Autonomous extends OpMode
             }else{
                 worldXPosition=fieldLength- 121.5f;
                 worldYPosition=22.0f;
-                worldAngle = AngleWrap((float) Math.toRadians(45.0f));
+                worldAngle = AngleWrap((float) Math.toRadians(45.0f-5.0f));
             }
 
 
@@ -536,7 +551,7 @@ public class Autonomous extends OpMode
             }else{
                 worldXPosition=121.5f;
                 worldYPosition = 22.0f;
-                worldAngle = AngleWrap((float) Math.toRadians(135.0f));
+                worldAngle = AngleWrap((float) Math.toRadians(135.0f+5.0f));
             }
 
         }
@@ -567,10 +582,35 @@ public class Autonomous extends OpMode
     boolean passedLine1 = false;
     float passedLine1Pos = -1.0f;
 
+    public void stopMotors(){
+        wheelLeft.setPower(0.0f);
+        wheelRight.setPower(0.0f);
+    }
 
 
     @Override
     public void loop() {
+
+
+        /*
+        telemetry.addData("Stage", programStage);
+        if(programStage == progStates.debugWait1 ||
+                programStage == progStates.debugWait2||
+                programStage == progStates.debugWait3||
+                programStage == progStates.debugWait4||
+                programStage == progStates.debugWait5||
+                programStage == progStates.debugWait6){
+            stopMotors();
+            if(gamepad1.a){
+                programStage = programStage.getNext();
+                StageFinished = true;
+            }
+        }
+        */
+
+
+
+
 
         telemetry.addLine()
                 .addData("GoalPosX",goalPositionX)
@@ -741,7 +781,9 @@ public class Autonomous extends OpMode
             }
 
 
-            move(84.0f,true,0.6f,0.0f,false,100.0f);
+
+            //move(84.0f,true,0.6f,0.0f,false,100.0f);
+            move(96.0f,true,0.6f,0.0f,false,30.0f);
         }
 
 
@@ -817,7 +859,7 @@ public class Autonomous extends OpMode
             if (StageFinished) {
                 initializeStateVariables();
             }
-            move(127.0f-blockStartingY,true,0.1f,0.1f,false,0.0f);
+            move(122.0f-blockStartingY,true,0.1f,0.1f,false,0.0f);
 
         }
 
@@ -839,16 +881,15 @@ public class Autonomous extends OpMode
 
 
         /////////////////////////Check the first half of the beacon's color
-
         if(programStage == progStates.read_beacon1){
             if(StageFinished){
                 initializeStateVariables();
                 if(blueside){
-                    wheelLeft.setPower(Globals.leftCurveSpeed*Globals.light_read_speed);
-                    wheelRight.setPower(Globals.rightCurveSpeed*Globals.light_read_speed);
+                    wheelLeft.setPower(Globals.leftCurveSpeed* Globals.light_read_speed);
+                    wheelRight.setPower(Globals.rightCurveSpeed* Globals.light_read_speed);
                 }else{
-                    wheelLeft.setPower(Globals.rightCurveSpeed*Globals.light_read_speed);
-                    wheelRight.setPower(Globals.leftCurveSpeed*Globals.light_read_speed);
+                    wheelLeft.setPower(Globals.rightCurveSpeed* Globals.light_read_speed);
+                    wheelRight.setPower(Globals.leftCurveSpeed* Globals.light_read_speed);
                 }
                 beacon_color = 0;
             }
@@ -914,6 +955,14 @@ public class Autonomous extends OpMode
             wheelLeft.setPower(0.0f);
             wheelRight.setPower(0.0f);
         }
+        /*
+        if(programStage == progStates.debugWaitColor){
+            stopMotors();
+            if(gamepad1.a){
+                programStage = programStage.getNext();
+                StageFinished = true;
+            }
+        }*/
         // Go to beacon1 if required
         if(programStage == progStates.go_to_beacon1){
             if(StageFinished){//if this is the first update of this block
@@ -921,16 +970,15 @@ public class Autonomous extends OpMode
             }
             if(beacon_color == 2) {
                 if(blueside){
-                    moveCurve(140.0f-blockStartingY,Globals.leftCurveSpeed*Globals.ready_press_speed,
-                            Globals.rightCurveSpeed*Globals.ready_press_speed,0.0f,false);
+                    moveCurve(136.0f-blockStartingY, Globals.leftCurveSpeed* Globals.ready_press_speed,
+                            Globals.rightCurveSpeed* Globals.ready_press_speed,0.0f,false);
                 }else{
-                    moveCurve(140.0f-blockStartingY,Globals.rightCurveSpeed*Globals.ready_press_speed,
-                            Globals.leftCurveSpeed*Globals.ready_press_speed,0.0f,false);
+                    moveCurve(136.0f-blockStartingY, Globals.rightCurveSpeed* Globals.ready_press_speed,
+                            Globals.leftCurveSpeed* Globals.ready_press_speed,0.0f,false);
                 }
                 telemetry.addData("Distance to move (red)",155.0f-blockStartingY);
             }
-            else {
-                /*
+            else {                /*
                 if(blueside){
                     moveCurve(134.0f-blockStartingY,Globals.leftCurveSpeed*Globals.ready_press_speed,
                             Globals.rightCurveSpeed*Globals.ready_press_speed,0.0f,false);
@@ -1010,24 +1058,31 @@ public class Autonomous extends OpMode
                 //reload the shootie
                 triggerStage = trigStates.state_reload_begin;
                 if(beacon_color == 1){
-                    beaconReleasePoint = 146.0f;
+                    beaconReleasePoint = 136.0f;
                 }else{
                     beaconReleasePoint = 160.0f;
                 }
-                drivetoBeacon2Speed = 0.25f;
+                drivetoBeacon2Speed = 0.13f;
             }
             if(worldYPosition >= beaconReleasePoint && !triggerUndeployed1){
-                triggerUndeployed1 = true;
                 //now we can go faster
-                drivetoBeacon2Speed = 1.0f;
+                if(worldYPosition>=beaconReleasePoint+4.0f){
+                    drivetoBeacon2Speed = 1.0f;
+                    triggerUndeployed1 = true;
+
+                }else{
+                    drivetoBeacon2Speed = 0.08f;
+                }
                 //Set yor angle
                 //worldAngle_rad = (float) Math.toRadians(90.0f);
+
 
                 if(blueside){
                     beacon_servo_1.setPosition(Globals.beacon_servo1_off);
                 }else{
                     beacon_servo_2.setPosition(Globals.beacon_servo2_off);
                 }
+
 
             }
             if(worldYPosition < 225.0f){
@@ -1092,11 +1147,11 @@ public class Autonomous extends OpMode
                 Globals.light_read_speed += 0.05f;
                 beacon_color = 0;
                 if(blueside){
-                    wheelLeft.setPower(Globals.leftCurveSpeed*Globals.light_read_speed);
-                    wheelRight.setPower(Globals.rightCurveSpeed*Globals.light_read_speed);
+                    wheelLeft.setPower(Globals.leftCurveSpeed* Globals.light_read_speed);
+                    wheelRight.setPower(Globals.rightCurveSpeed* Globals.light_read_speed);
                 }else{
-                    wheelLeft.setPower(Globals.rightCurveSpeed*Globals.light_read_speed);
-                    wheelRight.setPower(Globals.leftCurveSpeed*Globals.light_read_speed);
+                    wheelLeft.setPower(Globals.rightCurveSpeed* Globals.light_read_speed);
+                    wheelRight.setPower(Globals.leftCurveSpeed* Globals.light_read_speed);
                 }
             }
             if(blueside){
@@ -1234,9 +1289,9 @@ public class Autonomous extends OpMode
 
                 if(257.0f-blockStartingY > 0){
                     if(blueside){
-                        moveCurve(256.0f-blockStartingY,Globals.leftCurveSpeed*Globals.driveRedBeacon2Speed,Globals.rightCurveSpeed*Globals.driveRedBeacon2Speed,0.0f,false);
+                        moveCurve(256.0f-blockStartingY, Globals.leftCurveSpeed* Globals.driveRedBeacon2Speed, Globals.rightCurveSpeed* Globals.driveRedBeacon2Speed,0.0f,false);
                     }else{
-                        moveCurve(256.0f-blockStartingY,Globals.rightCurveSpeed*Globals.driveRedBeacon2Speed,Globals.leftCurveSpeed*Globals.driveRedBeacon2Speed,0.0f,false);
+                        moveCurve(256.0f-blockStartingY, Globals.rightCurveSpeed* Globals.driveRedBeacon2Speed, Globals.leftCurveSpeed* Globals.driveRedBeacon2Speed,0.0f,false);
                     }
                 }else{
                     programStage = programStage.getNext();
@@ -1261,11 +1316,11 @@ public class Autonomous extends OpMode
 
                 ////Make sure we are going forwards by setting the speeds here
                 if(blueside){
-                    wheelLeft.setPower(Globals.leftCurveSpeed*Globals.press_red_beacon2_speed);
-                    wheelRight.setPower(Globals.rightCurveSpeed*Globals.press_red_beacon2_speed);
+                    wheelLeft.setPower(Globals.leftCurveSpeed* Globals.press_red_beacon2_speed);
+                    wheelRight.setPower(Globals.rightCurveSpeed* Globals.press_red_beacon2_speed);
                 }else{
-                    wheelLeft.setPower(Globals.rightCurveSpeed*Globals.press_red_beacon2_speed);
-                    wheelRight.setPower(Globals.leftCurveSpeed*Globals.press_red_beacon2_speed);
+                    wheelLeft.setPower(Globals.rightCurveSpeed* Globals.press_red_beacon2_speed);
+                    wheelRight.setPower(Globals.leftCurveSpeed* Globals.press_red_beacon2_speed);
                 }
 
                 initializeStateVariables();
@@ -1324,10 +1379,10 @@ public class Autonomous extends OpMode
 
             }
             if(blueside){
-                moveCurve(blockStartingY - (HalffieldLength+40.0f),Globals.curveToCenterSpeedL,
+                moveCurve(blockStartingY - (HalffieldLength+40.0f), Globals.curveToCenterSpeedL,
                         Globals.curveToCenterSpeedR,0.2f,true);
             }else{
-                moveCurve(blockStartingY - (HalffieldLength+40.0f),Globals.curveToCenterSpeedR,
+                moveCurve(blockStartingY - (HalffieldLength+40.0f), Globals.curveToCenterSpeedR,
                         Globals.curveToCenterSpeedL,0.2f,true);
             }
         }

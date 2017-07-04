@@ -32,7 +32,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package org.firstinspires.ftc.teamcode;
 
-import android.media.MediaPlayer;
 import android.os.SystemClock;
 
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsAnalogOpticalDistanceSensor;
@@ -50,8 +49,6 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcontroller.internal.FtcRobotControllerActivity;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.w3c.dom.NamedNodeMap;
 
 /**
  * This file contains an example of an iterative (Non-Linear) "OpMode".
@@ -433,7 +430,6 @@ public class MyTeleOp extends OpMode
     boolean g1Left_bumper_down = false;
     @Override
     public void loop() {
-        FtcRobotControllerActivity.dimmer.longBright();
         ballLoaded = gamepad2.dpad_left;
         radiansToCenterDelta = Math.abs(AngleWrap(worldAngle_rad-((float) angleToCenter_rad-
                 (float) Math.toRadians(180.0f))));
@@ -507,7 +503,7 @@ public class MyTeleOp extends OpMode
             .addData("GoalY",goalPositionY);
 
 
-        telemetry.addData("Shooter Speed:",Globals.target_shooter_speed);
+        telemetry.addData("Shooter Speed:", Globals.target_shooter_speed);
 
         telemetry.addLine()
                 .addData("Manual Adjs:","")
@@ -859,8 +855,8 @@ public class MyTeleOp extends OpMode
             if(CapBallMotor1Delta > 6800 && goingUpwards){
                 CapBallMotor1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                 CapBallMotor2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                CapBallMotor1SpeedScale = 0.35f;
-                CapBallMotor2SpeedScale = 0.35f;
+                CapBallMotor1SpeedScale = 0.3f;
+                CapBallMotor2SpeedScale = 0.3f;
             }
             if(!goingUpwards){
                 CapBallMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -1278,7 +1274,7 @@ public class MyTeleOp extends OpMode
         //telemetry.addData("Aim Servo Position:", aimServoPositionMaster);
 
         if(gamepad2.left_bumper){
-            aimServoPositionMaster = 0.677f;
+            aimServoPositionMaster = 0.7458f;
         }
 
         aim_servo1.setPosition(aimServoPositionMaster);

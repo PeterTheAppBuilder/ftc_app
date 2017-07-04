@@ -38,11 +38,11 @@ public class Globals {
 
     public static final float startAimPosition = 0.6f;
 
-    public static final float aimLoadPosition = 0.467f;
+    public static final float aimLoadPosition = 0.5024f;
 
     //Calculated aim = shooter constant - (shooterSlope * distance to target)
-    public static final float shooterConstant = 0.778f;
-    public static final float shooterSlope = 0.0014f;
+    public static final float shooterConstant = 0.82f;
+    public static final float shooterSlope = 0.0012f;
 
 
     public static final float target_shooter_speed_base = 0.32f;

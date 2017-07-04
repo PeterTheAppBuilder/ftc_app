@@ -39,17 +39,24 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
+import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
+import android.view.SurfaceView;
 import android.view.View;
+import android.view.WindowManager;
 import android.webkit.WebView;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -95,11 +102,63 @@ import org.firstinspires.ftc.robotcore.internal.network.DeviceNameManager;
 import org.firstinspires.ftc.robotcore.internal.network.PreferenceRemoterRC;
 import org.firstinspires.ftc.robotcore.internal.network.StartResult;
 import org.firstinspires.inspection.RcInspectionActivity;
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.CameraBridgeViewBase;
+import org.opencv.android.JavaCameraView;
+import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
+import org.opencv.core.Mat;
+import org.opencv.imgcodecs.Imgcodecs;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import ftc.pathfinder.pathFinder;
+import ftc.vision.FrameGrabber;
+import ftc.vision.cameraSettings;
+
+import static org.opencv.imgproc.Imgproc.COLOR_BGR2RGB;
+import static org.opencv.imgproc.Imgproc.cvtColor;
+
 public class FtcRobotControllerActivity extends Activity {
+
+  ////////////// START VISION PROCESSING CODE //////////////
+
+
+
+  //when the "Grab" button is pressed
+  public void frameButtonOnClick(View v){
+
+  }
+
+
+  cameraSettings mcameraSettings;
+
+  private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
+    @Override
+    public void onManagerConnected(int status) {
+      switch (status) {
+        case LoaderCallbackInterface.SUCCESS:
+          mcameraSettings.enableView();
+          Log.i(TAG, "OpenCV Manager Connected");
+          //from now onwards, you can use OpenCV API
+//          Mat m = new Mat(5, 10, CvType.CV_8UC1, new Scalar(0));
+          //cameraBridgeViewBase.enableView();
+          break;
+        default:
+          Log.i(TAG, "OpenCV Manager Install");
+          super.onManagerConnected(status);
+          break;
+      }
+
+    }
+  };
+
+  ////////////// END VISION PROCESSING CODE //////////////
 
   public static final String TAG = "RCActivity";
 
@@ -137,6 +196,8 @@ public class FtcRobotControllerActivity extends Activity {
 
   protected FtcEventLoop eventLoop;
   protected Queue<UsbDevice> receivedUsbAttachmentNotifications;
+
+
 
   protected class RobotRestarter implements Restarter {
 
@@ -202,6 +263,12 @@ public class FtcRobotControllerActivity extends Activity {
     super.onCreate(savedInstanceState);
     RobotLog.writeLogcatToDisk();
     RobotLog.vv(TAG, "onCreate()");
+
+
+
+
+
+
 
     // Quick check: should we pretend we're not here, and so allow the Lynx to operate as
     // a stand-alone USB-connected module?
@@ -283,6 +350,38 @@ public class FtcRobotControllerActivity extends Activity {
     startWatchdogService();
     bindToService();
     logPackageVersions();
+    getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+
+
+
+
+
+    mcameraSettings = (cameraSettings) findViewById(R.id.show_camera_activity_java_surface_view);
+    new FrameGrabber(mcameraSettings);
+
+
+
+    final Button calibrateButton = (Button) findViewById(R.id.calibrateButton);
+    calibrateButton.setOnClickListener(new View.OnClickListener() {
+      public void onClick(View v) {
+        FrameGrabber.calibrate();
+      }
+    });
+
+
+    try {
+      pathFinder.fieldMap = Utils.loadResource(this, R.drawable.fieldmap, Imgcodecs.CV_LOAD_IMAGE_COLOR);
+      cvtColor(pathFinder.fieldMap,pathFinder.fieldMap,COLOR_BGR2RGB);
+      pathFinder.createGrid();
+      //FrameGrabber.canStart  = true;
+      pathFinder.calcPath(21,21,0,16);
+
+
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
   }
 
   protected UpdateUI createUpdateUI() {
@@ -298,6 +397,8 @@ public class FtcRobotControllerActivity extends Activity {
     result.setStateMonitor(new SoundPlayingRobotMonitor());
     return result;
   }
+
+
 
   @Override
   protected void onStart() {
@@ -319,12 +420,20 @@ public class FtcRobotControllerActivity extends Activity {
         return false;
       }
     });
+
   }
 
   @Override
   protected void onResume() {
     super.onResume();
     RobotLog.vv(TAG, "onResume()");
+    if (!OpenCVLoader.initDebug()) {
+      Log.d(TAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");
+      OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, mLoaderCallback);
+    } else {
+      Log.d(TAG, "OpenCV library found inside package. Using it!");
+      mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+    }
   }
 
   @Override
@@ -333,6 +442,9 @@ public class FtcRobotControllerActivity extends Activity {
     RobotLog.vv(TAG, "onPause()");
     if (programmingModeController.isActive()) {
       programmingModeController.stopProgrammingMode();
+    }
+    if (mcameraSettings != null) {
+      mcameraSettings.disableView();
     }
   }
 
@@ -359,6 +471,9 @@ public class FtcRobotControllerActivity extends Activity {
     stopWatchdogService();
     wifiLock.release();
     RobotLog.cancelWriteLogcatToDisk();
+    if (mcameraSettings != null) {
+      mcameraSettings.disableView();
+    }
   }
 
   protected void bindToService() {
