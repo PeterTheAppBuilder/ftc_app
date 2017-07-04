@@ -60,7 +60,7 @@ KeyPoint toGray(Mat img, Mat &drawingImage,bool blueside) {
 
     if(blueside){
         //Convert hsv to a boolean image based on if the color meets the hsv requirements or not
-        cv::inRange(hsv,Scalar(avH-20,75,170),Scalar(avH+20,255,255),booleanImage);
+        cv::inRange(hsv,Scalar(avH-20,75,30),Scalar(avH+20,255,255),booleanImage);
     }else{
         Mat hsv1;
         Mat hsv2;
@@ -145,7 +145,7 @@ KeyPoint toGray(Mat img, Mat &drawingImage,bool blueside) {
         float currentBallRadius = keypoints[i].size;
         //only pass the values of this ball on if it's radius correlates to it's size correctly, otherwise,
         //just display purple
-        if(predictedSize/(keypoints[i].size/2) < 1.2 && predictedSize/(keypoints[i].size/2) > 0.8){
+        if(predictedSize/(keypoints[i].size/2) < 1.7 && predictedSize/(keypoints[i].size/2) > 0.3){
             bestBallX = p.x;
             bestBallY = p.y;
             bestBallRadius = keypoints[i].size;

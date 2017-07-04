@@ -22,6 +22,11 @@ public class grid {
     }
 
     public void setTarget(int x,int y){
+
+        //reset everything from the previous pathfinding
+        allBlocks = new ArrayList<>();
+        m_steps = new ArrayList<>();
+
         m_targetX = x;
         m_targetY = y;
 
@@ -73,10 +78,11 @@ public class grid {
         ArrayList<Point> steps = new ArrayList<Point>();
         p_Block stepBlock = currentBlock;
         for(;;){
-            steps.add(new Point(stepBlock.x,stepBlock.y));
             if(stepBlock == ourself){
                 break;
             }
+            steps.add(new Point(stepBlock.x,stepBlock.y));
+
             stepBlock = stepBlock.m_parent;
         }
         m_steps = steps;

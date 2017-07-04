@@ -104,88 +104,71 @@ public class FrameGrabber implements
     public static long findTime = 0;
 
 
-
-
-    ///These variables re for debugging the pathfinder
-    long lastIterationTime = 0;
-    public static boolean canStart = false;
-    boolean initialized = false;
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
 
 
 
-        if(usingVision){
-            mRgba.release();
-            mRgba = inputFrame.rgba();
+        mRgba.release();
+        mRgba = inputFrame.rgba();
 
 
 
 
-            OpencvNativeClass.convertGray(mRgba.getNativeObjAddr(),mGray.getNativeObjAddr(),blueside);
-            bestBallX = OpencvNativeClass.bestBallX;
-            bestBallY = OpencvNativeClass.bestBallY;
-            bestBallRadius = OpencvNativeClass.bestBallRadius;
-            uptoDate = false;
+        OpencvNativeClass.convertGray(mRgba.getNativeObjAddr(),mGray.getNativeObjAddr(),blueside);
+        bestBallX = OpencvNativeClass.bestBallX;
+        bestBallY = OpencvNativeClass.bestBallY;
+        bestBallRadius = OpencvNativeClass.bestBallRadius;
+        uptoDate = false;
 
 
 
 
 
 
-            rectangle(mGray,new Point(bestBallX - (bestBallRadius/2.0f),bestBallY - (bestBallRadius/2.0f)),
-                    new Point(bestBallX + (bestBallRadius/2.0f),bestBallY+(bestBallRadius/2.0f)),
-                    new Scalar(255,0,0,1),5);
-
-
-
-
-            return mGray;
-        }
-        if(blankMat != null){
-            blankMat.release();
-        }
-        blankMat = new Mat(inputFrame.rgba().rows(),inputFrame.rgba().cols(),inputFrame.rgba().type());
+        rectangle(mGray,new Point(bestBallX - (bestBallRadius/2.0f),bestBallY - (bestBallRadius/2.0f)),
+                new Point(bestBallX + (bestBallRadius/2.0f),bestBallY+(bestBallRadius/2.0f)),
+                new Scalar(255,0,0,1),5);
 
         if(pathFinder.m_grid != null){
             int scale = 30;
-            rectangle(blankMat,new Point(0,0),new Point(pathFinder.m_grid.m_rows*scale,pathFinder.m_grid.m_cols*scale),
+            rectangle(mGray,new Point(0,0),new Point(pathFinder.m_grid.m_rows*scale,pathFinder.m_grid.m_cols*scale),
                     new Scalar(100,100,255),4);
-            rectangle(blankMat,new Point(pathFinder.m_grid.m_targetX*scale,pathFinder.m_grid.m_targetY*scale),
+            rectangle(mGray,new Point(pathFinder.m_grid.m_targetX*scale,pathFinder.m_grid.m_targetY*scale),
                     new Point((pathFinder.m_grid.m_targetX *scale)+scale,(pathFinder.m_grid.m_targetY*scale)+scale),
                     new Scalar(255,255,255),-1);
             for(p_Block iterBlock: pathFinder.m_grid.allBlocks){
                 if(iterBlock.invalid){
-                    rectangle(blankMat,new Point(iterBlock.x*scale,iterBlock.y*scale),
+                    rectangle(mGray,new Point(iterBlock.x*scale,iterBlock.y*scale),
                             new Point((iterBlock.x *scale)+scale,(iterBlock.y*scale)+scale),new Scalar(255,0,0),1);
                 }
                 if(iterBlock.open){
-                    rectangle(blankMat,new Point(iterBlock.x*scale,iterBlock.y*scale),
+                    rectangle(mGray,new Point(iterBlock.x*scale,iterBlock.y*scale),
                             new Point((iterBlock.x *scale)+scale,(iterBlock.y*scale)+scale),new Scalar(0,255,0),1);
                 }
                 if(iterBlock.closed){
-                    rectangle(blankMat,new Point(iterBlock.x*scale,iterBlock.y*scale),
+                    rectangle(mGray,new Point(iterBlock.x*scale,iterBlock.y*scale),
                             new Point((iterBlock.x *scale)+scale,(iterBlock.y*scale)+scale),new Scalar(193,40,236),-1);
                 }
                 if(iterBlock.m_parent != null && iterBlock.closed){
-                    line(blankMat,new Point(iterBlock.x*scale,iterBlock.y*scale),
+                    line(mGray,new Point(iterBlock.x*scale,iterBlock.y*scale),
                             new Point(iterBlock.m_parent.x*scale,iterBlock.m_parent.y*scale),new Scalar(255,255,0),3);
                 }
 
-                putText(blankMat,Integer.toString((int) iterBlock.g_score),new Point(iterBlock.x*scale,iterBlock.y*scale),1,1,new Scalar(160,160,255));
-                putText(blankMat,Integer.toString((int) iterBlock.f_score),new Point(iterBlock.x*scale,(iterBlock.y*scale)+20),1,1,new Scalar(255,160,160));
+                putText(mGray,Integer.toString((int) iterBlock.g_score),new Point(iterBlock.x*scale,iterBlock.y*scale),1,1,new Scalar(160,160,255));
+                putText(mGray,Integer.toString((int) iterBlock.f_score),new Point(iterBlock.x*scale,(iterBlock.y*scale)+20),1,1,new Scalar(255,160,160));
 
 
 
             }
 
             if(pathFinder.m_filteredSteps != null){
+                int i = 0;
                 for(Point thisStepPoint: pathFinder.m_filteredSteps){
-                    rectangle(blankMat,new Point(thisStepPoint.x*scale,thisStepPoint.y*scale),
-                            new Point((thisStepPoint.x*scale)+3,(thisStepPoint.y*scale)+3),new Scalar(255,255,255),5);
-
+                    putText(mGray,Integer.toString(i),new Point(thisStepPoint.x*scale,thisStepPoint.y*scale),1,5,new Scalar(255,255,255));
+                    i++;
                 }
-                putText(blankMat,Long.toString(findTime),new Point(50,50),1,4,new Scalar(255,255,255));
+                putText(mGray,Long.toString(findTime),new Point(50,50),1,4,new Scalar(255,255,255));
             }
 
         }
@@ -193,7 +176,7 @@ public class FrameGrabber implements
 
 
 
-        return blankMat;
+        return mGray;
 
     }
     public static boolean uptoDate = false;

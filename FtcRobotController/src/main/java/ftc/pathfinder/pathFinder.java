@@ -64,6 +64,9 @@ public class pathFinder {
 
         long timeStart = SystemClock.uptimeMillis();
 
+
+        target_Y = 24-target_Y;
+        my_Y = 24-my_Y;
         m_grid.setTarget(target_X,target_Y);
 
 
@@ -132,6 +135,9 @@ public class pathFinder {
         m_filteredSteps = filteredSteps;
 
         FrameGrabber.findTime = SystemClock.uptimeMillis()-timeStart;
+
+
+
         return filteredSteps;
     }
 

@@ -73,6 +73,7 @@ public class OldRobotTest extends OpMode {
 
     public enum progStates {
 
+        /*
         turn_to_center_vortex,
         move_before_shooting,
         reloadn1,
@@ -86,9 +87,9 @@ public class OldRobotTest extends OpMode {
         aimn2,
         waitforaimn2,
         firen2,
-        firstScan,
-        goToFirstScanBall,
+        */
         waitforfire,
+
         searchingForBalls,
         lockingIteration1,
         lockingIteration2,
@@ -113,7 +114,7 @@ public class OldRobotTest extends OpMode {
     ////////////////////DEFINE VARIABLES//////////////////////////////////////
     private float closestScanBallAngle;
     private float closestScanBallDistance;
-    public progStates programStage = progStates.turn_to_center_vortex;
+    public progStates programStage = progStates.searchingForBalls;//progStates.turn_to_center_vortex;
     public boolean StageFinished = true;
     public float DistanceToTargetCentimeters = 0.0f;
     public DcMotor wheelRight;
@@ -223,10 +224,7 @@ public class OldRobotTest extends OpMode {
 
             FrameGrabber.uptoDate = true;
 
-            if (ballYRelativeToRobot < closestScanBallDistance && programStage == progStates.firstScan) {
-                closestScanBallAngle = (float) angleToTurnVision_rad;
-                closestScanBallDistance = (float) ballYRelativeToRobot;
-            }
+
         } else {
             foundBall = false;
         }
@@ -251,7 +249,7 @@ public class OldRobotTest extends OpMode {
     public void init() {
 
 
-        programStage = progStates.turn_to_center_vortex;
+        programStage = progStates.searchingForBalls;
 
 
         Globals.target_shooter_speed = Globals.target_shooter_speed_base;//cool
@@ -542,6 +540,7 @@ public class OldRobotTest extends OpMode {
 
 
     public void mainStateMachine() {
+        /*
         if (programStage == progStates.turn_to_center_vortex) {
             if (StageFinished) {
                 aimServoPositionMaster = Globals.aimLoadPosition;
@@ -582,9 +581,11 @@ public class OldRobotTest extends OpMode {
             move(30.0f, false, 0.3f, 0.5f, true, 10.0f);
         }
 
+        */
 
         Aim_and_trigger_servo_movement();
 
+        /*
 
         telemetry.addLine()
                 .addData("Ballx", FrameGrabber.bestBallX)
@@ -594,47 +595,29 @@ public class OldRobotTest extends OpMode {
                 .addData("BallYAbsolute", ballYRelativeToRobot)
                 .addData("Size", FrameGrabber.bestBallRadius);
         telemetry.addData("wallDetectorReading", wallDetector.cmUltrasonic());
+        */
         newTestBallFinderFunction();
 
 
-        if (programStage == progStates.firstScan) {
-            if (StageFinished) {
-                initializeStateVariables();
-                closestScanBallAngle = -1.0f;
-                closestScanBallDistance = 10000000f;
-            }
-            if (blueside) {
-                //turn in place
-                wheelLeft.setPower(0.09f);
-                wheelRight.setPower(-0.09f);
-            } else {
-                //turn in place
-                wheelLeft.setPower(-0.09f);
-                wheelRight.setPower(0.09f);
-            }
 
-            //so basically, if you have complmeted a full turn or you see a ball that is closer than 150 cm,
-            //EAT!!!
-            if ((Math.abs(AngleWrap(blockStartingAngle - worldAngle_rad)) < Math.toRadians(2.0f) &&
-                    SystemClock.uptimeMillis() - blockStartTime > 2000) || closestScanBallDistance < 150.0f) {
-                programStage = programStage.getNext();
-                StageFinished = true;
-            }
-
-
-        }
-        if (programStage == progStates.goToFirstScanBall) {
-            if (StageFinished) {
-                initializeStateVariables();
-            }
-            //go to the angle of the best ball and once done, re-lock on to it to make sure
-            MoveToAngleAbsolute(closestScanBallAngle,
-                    (float) Math.toRadians(8.0f), 0.17f, 2, true, true, programStage.lockingIteration1);
-        }
 
 
         if (programStage == progStates.searchingForBalls) {
             if (StageFinished) {
+                goalPositionY = HalffieldLength + (float) Math.sin(Math.toRadians(-45.0f)) * 15.5f * 2.54f;
+                if (blueside) {
+                    goalPositionX = HalffieldLength + (float) Math.cos(Math.toRadians(-45.0f)) * 15.5f * 2.54f;
+                    worldXPosition = 119;
+                    worldYPosition = 36;
+                    worldAngle_rad = (float) Math.toRadians(-90.0f);
+                } else {
+                    goalPositionX = HalffieldLength + (float) Math.cos(Math.toRadians(-135.0f)) * 15.5f * 2.54f;
+                    worldXPosition = fieldLength - 119;
+                    worldYPosition = 36;
+                    worldAngle_rad = (float) Math.toRadians(-90.0f);
+                }
+
+
                 aimServoPositionMaster = Globals.aimLoadPosition;
                 initializeStateVariables();
             }
@@ -707,43 +690,62 @@ public class OldRobotTest extends OpMode {
             if (StageFinished) {
                 stopMotors();
                 initializeStateVariables();
+
                 //our position is our percentage across the field multiplied
                 // by the path-finding resolution
-                double myPositionX = (worldXPosition/fieldLength)*25;
-                double myPositionY = (worldYPosition/fieldLength)*25;
-                double ballXAbsolute = Math.cos(worldAngle_rad)*currentLockYPositionToRobot;
-                double ballYAbsolute = Math.sin(worldAngle_rad)*currentLockYPositionToRobot;
+                double myPositionX = (worldXPosition/fieldLength)*24;
+                double myPositionY = (worldYPosition/fieldLength)*24;
+
+                float phoneAngle = worldAngle_rad;//AngleWrap(worldAngle_rad-(float) Math.toRadians(180.0f));
+                double ballXAbsolute = Math.cos(phoneAngle)*currentLockYPositionToRobot;
+                double ballYAbsolute = Math.sin(phoneAngle)*currentLockYPositionToRobot;
+
                 ballXAbsolute += worldXPosition;
                 ballYAbsolute += worldYPosition;
+                ballXAbsolute = (ballXAbsolute/fieldLength)*24;
+                ballYAbsolute = (ballYAbsolute/fieldLength)*24;
+                telemetry.addLine().addData("BallXAbs",ballXAbsolute)
+                .addData("BallYAbs",ballYAbsolute);
+                telemetry.addLine().addData("MyXField",myPositionX)
+                        .addData("MyYField",myPositionY);
+                telemetry.addData("Phone Angle",Math.toDegrees(phoneAngle));
+
+
                 pathFinder.calcPath((int) Math.round(myPositionX),
                         (int) Math.round(myPositionY),
-                        (int) Math.round((ballXAbsolute/fieldLength)*25 ),
-                        (int) Math.round((ballYAbsolute/fieldLength)*25));
+                        (int) Math.round( ballXAbsolute ),
+                        (int) Math.round(ballYAbsolute) );
+
+
             }
+
             //Execute the path-following state machine only if the stage is less than the number
             //of steps and the steps have been computed in the pathfinder
-            if(goToBallStage <= pathFinder.m_filteredSteps.size() && pathFinder.m_filteredSteps != null){
+            if(goToBallStage < pathFinder.m_filteredSteps.size()-1 && pathFinder.m_filteredSteps != null){
                 if(goToBallStepStage == 0){
-                    Point thisStep = pathFinder.m_filteredSteps.get(goToBallStage);
+                    Point thisStep = pathFinder.m_filteredSteps.get(goToBallStage+1);
                     //calculate the x position of the pathfinder's step by dividing it by the
                     //pathfinder's field size and multiplying it by our field size
-                    double thisStepX = (thisStep.x/25)*fieldLength;
-                    double thisStepY = (thisStep.y/25)*fieldLength;
+
+                    double thisStepX = (thisStep.x/24)*fieldLength;
+                    double thisStepY = (1-(thisStep.y/24))*fieldLength;
+
                     //of course when calculating angles, we need the step position relative to us
                     double deltaXPoint = thisStepX-worldXPosition;
                     double deltaYPoint = thisStepY-worldYPosition;
                     double AngleToStepPoint = Math.atan2(deltaYPoint,deltaXPoint);
+
                     distanceToStepPoint = Math.sqrt(Square((float) deltaXPoint)+Square((float) deltaYPoint));
 
 
-                    //test comment
 
                     //move to the angle calculated but don't advance the state since we are in a mini state machine
                     //the turn function will increment our goToBallStepStage variable to go to the next stage
-                    MoveToAngleAbsolute((float) AngleToStepPoint,(float) Math.toRadians(15.0f),0.5f,2,false,true,programStage);
+                    MoveToAngleAbsolute((float) AngleToStepPoint,(float) Math.toRadians(15.0f),0.15f,2,false,true,programStage);
                 }
                 if(goToBallStepStage == 1){
-                    move((float) distanceToStepPoint,true,0.5f,0.3f,true,30.0f);
+
+                    move((float) distanceToStepPoint,true,0.2f,0.3f,true,30.0f);
                 }
             }
         }
@@ -783,7 +785,7 @@ public class OldRobotTest extends OpMode {
 
 
         //////////RELOAD
-        if (programStage == progStates.reload || programStage == progStates.reloadn1 || programStage == progStates.reloadn2) {
+        if (programStage == progStates.reload ){//|| programStage == progStates.reloadn1 || programStage == progStates.reloadn2) {
             if (StageFinished) {//if this is the first update of this block
                 initializeStateVariables();
                 triggerStage = trigStates.state_reload_begin;
@@ -792,13 +794,13 @@ public class OldRobotTest extends OpMode {
                 StageFinished = true;
             }
         }
-        if (programStage == progStates.waitforreload || programStage == progStates.waitforreloadn1 || programStage == progStates.waitforreloadn2) {
+        if (programStage == progStates.waitforreload){// || programStage == progStates.waitforreloadn1 || programStage == progStates.waitforreloadn2) {
             wait(1500);
         }
 
 
         //////////YOTO YAIM
-        if (programStage == progStates.aim || programStage == progStates.aimn1 || programStage == progStates.aimn2) {
+        if (programStage == progStates.aim ){//|| programStage == progStates.aimn1 || programStage == progStates.aimn2) {
             if (StageFinished) {//if this is the first update of this block
                 initializeStateVariables();
 
@@ -812,9 +814,9 @@ public class OldRobotTest extends OpMode {
             }
         }
 
-        if (programStage == progStates.waitforaim ||
-                programStage == progStates.waitforaimn1 ||
-                programStage == progStates.waitforaimn2) {
+        if (programStage == progStates.waitforaim ){//||
+                //programStage == progStates.waitforaimn1 ||
+                //programStage == progStates.waitforaimn2) {
             wait(500);
         }
 
@@ -829,7 +831,7 @@ public class OldRobotTest extends OpMode {
             }
         }
         //////////FIRE!!!!!!!!!!!!!!!!!!!!!!!!!!!!//////////////////////////////////////////////////////////////////////////////
-        if (programStage == progStates.firen1 || programStage == progStates.firen2) {
+        /*if (programStage == progStates.firen1 || programStage == progStates.firen2) {
             if (StageFinished) {//if this is the first update of this block
                 initializeStateVariables();
                 triggerStage = trigStates.state_fire;
@@ -837,14 +839,16 @@ public class OldRobotTest extends OpMode {
                 programStage = programStage.getNext();
             }
         }
+        */
 
-        if (programStage == progStates.waitforfire || programStage == progStates.waitforfiren1) {
+        if (programStage == progStates.waitforfire){// || programStage == progStates.waitforfiren1) {
             wait(700);
         }
     }
 
     public void debugDisplayText() {
-        telemetry.addData("programStage", programStage);
+
+        //telemetry.addData("programStage", programStage);
 
         telemetry.addLine()
                 .addData("X: ", worldXPosition)
@@ -852,19 +856,21 @@ public class OldRobotTest extends OpMode {
                 .addData(" ∠: ", Math.toDegrees(worldAngle_rad));
 
 
-        telemetry.addLine()
-                .addData("GoalX", goalPositionX)
-                .addData("GoalY", goalPositionY);
+
+        //telemetry.addLine()
+                //.addData("GoalX", goalPositionX)
+                //.addData("GoalY", goalPositionY);
 
 
-        telemetry.addData("Shooter Speed:", Globals.target_shooter_speed);
+        //telemetry.addData("Shooter Speed:", Globals.target_shooter_speed);
 
+        /*
         telemetry.addLine()
                 .addData("Manual Adjs:", "")
                 .addData("X: ", goalPositionX_offset)
                 .addData("Y: ", goalPositionY_offset);
         telemetry.addData("AimServo: ", aimServoPositionMaster);
-
+        */
 
         telemetry.update();
     }
@@ -1179,7 +1185,7 @@ public class OldRobotTest extends OpMode {
         wheelRight.setPower(Range.clip(wheelRightPower, -maxpower, maxpower));
 
 
-        telemetry.addData("How much to turn:", Math.toDegrees(howMuchToTurn));
+        //telemetry.addData("How much to turn:", Math.toDegrees(howMuchToTurn));
         //if we are within one degree of our target angle, finish and move to the next thing and brake
         if (Math.abs(howMuchToTurn) <= Math.toRadians(1.0f)) {
             if (Break) {
@@ -1194,6 +1200,7 @@ public class OldRobotTest extends OpMode {
             //if we are in the path following stage, incrememnt that state-machine variable
             if(programStage == progStates.pathFollowingStage){
                 goToBallStepStage++;
+                initializeStateVariables();
             }
         }
     }
