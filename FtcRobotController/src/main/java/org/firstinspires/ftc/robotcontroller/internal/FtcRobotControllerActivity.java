@@ -375,7 +375,7 @@ public class FtcRobotControllerActivity extends Activity {
       cvtColor(pathFinder.fieldMap,pathFinder.fieldMap,COLOR_BGR2RGB);
       pathFinder.createGrid();
       //FrameGrabber.canStart  = true;
-      pathFinder.calcPath(21,21,0,16);
+      pathFinder.calcPath(0,11,0,5);
 
 
     } catch (IOException e) {

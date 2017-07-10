@@ -30,7 +30,7 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
 TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-package org.firstinspires.ftc.teamcode;
+package OldRobot;
 
 import android.os.SystemClock;
 
@@ -47,8 +47,6 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
-
-import org.firstinspires.ftc.robotcontroller.internal.FtcRobotControllerActivity;
 
 /**
  * This file contains an example of an iterative (Non-Linear) "OpMode".
@@ -386,8 +384,7 @@ public class MyTeleOp extends OpMode
             }
 
         }
-        wheelLeftLast = dead_motor.getCurrentPosition();
-        wheelRightLast= collector_motor.getCurrentPosition();
+
 
         aim_servo1.setPosition(0.0f);
 
@@ -1660,22 +1657,21 @@ public class MyTeleOp extends OpMode
             if(Math.abs(WheelRightOT_delta_temp) <= All_telemetry_trackers_wrapAroundThreshold && WheelRightOT_WrapingAround){
                 WheelRightOT_WrapingAround = false;
                 WheelRightOT_delta_temp = WheelRightOT_curr_sensor_reading - WheelRightOT_lastvalidreading;
-                if(WheelRightOT_delta_temp > 0.5f){
-                    WheelRightOT_delta_final -=1.0f;
-                }
-                if(WheelRightOT_delta_temp <-0.5f){
-                    WheelRightOT_delta_final +=1.0f;
+                if(WheelRightOT_delta_temp > 0.0f){
+                    WheelRightOT_delta_final -=1;
+                }else {
+                    WheelRightOT_delta_final += 1;
                 }
             }
             if(Math.abs(WheelLeftOT_delta_temp) <= All_telemetry_trackers_wrapAroundThreshold && WheelLeftOT_WrapingAround){
                 WheelLeftOT_WrapingAround = false;
                 WheelLeftOT_delta_temp = WheelLeftOT_curr_sensor_reading - WheelLeftOT_lastvalidreading;
-                if(WheelLeftOT_delta_temp > 0.5f){
-                    WheelLeftOT_delta_final -=1.0f;
+                if(WheelLeftOT_delta_temp > 0.0f){
+                    WheelLeftOT_delta_final -=1;
+                }else {
+                    WheelLeftOT_delta_final += 1;
                 }
-                if(WheelLeftOT_delta_temp <-0.5f){
-                    WheelLeftOT_delta_final +=1.0f;
-                }
+
             }
 
             if(Math.abs(WheelRightOT_delta_temp) >= All_telemetry_trackers_wrapAroundThreshold && !WheelRightOT_WrapingAround){

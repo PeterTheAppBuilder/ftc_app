@@ -54,10 +54,6 @@ public class FrameGrabber implements
         c.setCvCameraViewListener(this);
         c.turnOffAutoExposure();
         this.mcameraSettings = c;
-
-
-
-
     }
 
 
@@ -104,18 +100,20 @@ public class FrameGrabber implements
     public static long findTime = 0;
 
 
+    public static double x = 0;
+    public static double y =0;
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-
 
 
         mRgba.release();
         mRgba = inputFrame.rgba();
 
 
+        rectangle(mGray,new Point(0,0),new Point(mGray.cols(),mGray.rows()),new Scalar(0,0,0),-1);
 
 
-        OpencvNativeClass.convertGray(mRgba.getNativeObjAddr(),mGray.getNativeObjAddr(),blueside);
+        //OpencvNativeClass.convertGray(mRgba.getNativeObjAddr(),mGray.getNativeObjAddr(),blueside);
         bestBallX = OpencvNativeClass.bestBallX;
         bestBallY = OpencvNativeClass.bestBallY;
         bestBallRadius = OpencvNativeClass.bestBallRadius;
@@ -130,8 +128,9 @@ public class FrameGrabber implements
                 new Point(bestBallX + (bestBallRadius/2.0f),bestBallY+(bestBallRadius/2.0f)),
                 new Scalar(255,0,0,1),5);
 
+        int scale = 20;
+
         if(pathFinder.m_grid != null){
-            int scale = 30;
             rectangle(mGray,new Point(0,0),new Point(pathFinder.m_grid.m_rows*scale,pathFinder.m_grid.m_cols*scale),
                     new Scalar(100,100,255),4);
             rectangle(mGray,new Point(pathFinder.m_grid.m_targetX*scale,pathFinder.m_grid.m_targetY*scale),
@@ -173,6 +172,14 @@ public class FrameGrabber implements
 
         }
 
+
+
+
+        double x_screen = x/315.0f;
+        double y_screen = 1-(y/315.0f);
+        x_screen*=scale*25;
+        y_screen*=scale*25;
+        circle(mGray,new Point(x_screen,y_screen),3,new Scalar(0,255,0),3);
 
 
 

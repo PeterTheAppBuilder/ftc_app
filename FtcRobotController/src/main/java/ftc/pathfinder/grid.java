@@ -1,5 +1,9 @@
 package ftc.pathfinder;
 
+import android.os.SystemClock;
+
+import com.qualcomm.hardware.ams.AMSColorSensor;
+
 import org.opencv.core.Point;
 
 import java.util.ArrayList;
@@ -46,6 +50,7 @@ public class grid {
 
     public p_Block getBlock(int row, int col){
         int index = (row*m_cols)+col;
+
         return allBlocks.get(index);
     }
 
@@ -64,8 +69,6 @@ public class grid {
         p_Block ourself = new p_Block(myPosX,myPosY,m_targetX,m_targetY);
         ourself.g_score = 0.0f; // our movement cost is 0 since it is the starting point
 
-
-
         currentBlock = ourself;
         for(;;){
             calcPathStep();
@@ -75,31 +78,40 @@ public class grid {
         }
 
         //trace the path via parents. The step ArrayList will be in reverse order
-        ArrayList<Point> steps = new ArrayList<Point>();
+        ArrayList<stepPoint> steps = new ArrayList<stepPoint>();
         p_Block stepBlock = currentBlock;
+
+        //remember if the previous block was constrained, because we need to figure out
+        //which blocks we absolutely must go through to preserve the constraints
+        boolean lastBlockConstrained = false;
         for(;;){
             if(stepBlock == ourself){
                 break;
             }
-            steps.add(new Point(stepBlock.x,stepBlock.y));
 
+            boolean needsToGoThrough = false;
+            //if this block is not constrained however the last block was, add it as a
+            //point that needs to be gone through in order to preserve it's constraint
+            if(!stepBlock.horizontalOnly && !stepBlock.verticalOnly && lastBlockConstrained){
+                needsToGoThrough = true;
+            }
+
+            steps.add(new stepPoint(stepBlock.x,stepBlock.y,needsToGoThrough));
+
+
+            if(stepBlock.horizontalOnly || stepBlock.verticalOnly){
+                lastBlockConstrained = true;
+            }else{
+                lastBlockConstrained = false;
+            }
             stepBlock = stepBlock.m_parent;
         }
         m_steps = steps;
         Collections.reverse(m_steps);
 
     }
-    public ArrayList<Point> m_steps;
-
-
-    public void calcStart(int myPosX, int myPosY) {
-        //add ourselves to the closed list
-        p_Block ourself = new p_Block(myPosX, myPosY, m_targetX, m_targetY);
-        ourself.g_score = 0.0f; // our movement cost is 0 since it is the starting point
-        currentBlock = ourself;
-    }
+    public ArrayList<stepPoint> m_steps;
     public void calcPathStep(){
-
         currentBlock.closed = true;
         currentBlock.open = false;
 
@@ -107,86 +119,47 @@ public class grid {
         for(int adjX = currentBlock.x - 1; adjX <= currentBlock.x + 1; adjX ++){
             for(int adjY = currentBlock.y -1; adjY <= currentBlock.y +1; adjY++){
 
-
-
-
                 //if the adjacent spot we are comparing is currently a closed block
-                boolean closedBlockHere = false;
+                boolean unusable = false;
 
-                ////////Scan to see if there is a closed block or invalid block already here
-                for(p_Block iterBlock: allBlocks){
-                    if(iterBlock.closed || iterBlock.invalid){
-                        if(iterBlock.x == adjX && iterBlock.y == adjY){
-                            closedBlockHere = true;
-                        }
-                    }
-                }
-                //Can't scan negative blocks outside the grid
+                ////////Check if this block is closed, invalid, or outside the grid.
+                ///If so, then don't do anything
+
+
+                //start by seeing if the block is out of bounds to make sure we are not accessing
+                //a non-existent ArrayList member.
                 if(adjX < 0||adjY < 0 || adjX >= m_rows || adjY >= m_cols){
-                    closedBlockHere = true;
+                    unusable = true;
+                }else{
+                    if(getBlock(adjX,adjY).closed || getBlock(adjX,adjY).invalid){
+                        unusable = true;
+                    }
+                }
+                //don't allow diagonal movements because they screw us when trying to determine the
+                //path with the least possible turns
+                if(Math.sqrt(Math.pow(adjX-currentBlock.x,2)+Math.pow(adjY-currentBlock.y,2)) > 1){
+                    unusable = true;
                 }
 
-
-                if(!closedBlockHere){
-
-                    //if there is already a block in the adjacent space that has a parent,
-                    //remember it to see if we should override it's parent
-                    boolean competingParent = false;
-
-                    if(getBlock(adjX,adjY).m_parent != null){
-                        //remember that there was a competing parent
-                        competingParent = true;
+                if(!unusable){//only process this is the block is not unusable
+                    boolean okayToParent=true;
+                    //we can not create a new block with us as the parent if it violates any of
+                    //the constraints like horizontal and vertical only constraints.
+                    if(currentBlock.verticalOnly){
+                        if(!currentBlock.isVertical(getBlock(adjX,adjY))){
+                            okayToParent = false;
+                        }
                     }
-
-                    if(!competingParent){
-                        boolean okayToParent=true;
-                        if(currentBlock.horizontalOnly){
-                            if(!currentBlock.isHorizontal(getBlock(adjX,adjY))){
-                                okayToParent = false;
-                            }
+                    if(currentBlock.horizontalOnly){
+                        if(!currentBlock.isHorizontal(getBlock(adjX,adjY))){
+                            okayToParent = false;
                         }
-
-                        //we can not create a new block with us as the parent if it violates any of
-                        //the constraints like horizontal and vertical only constraints.
-                        if(currentBlock.verticalOnly){
-                            if(!currentBlock.isVertical(getBlock(adjX,adjY))){
-                                okayToParent = false;
-                            }
-                        }
-                        if(currentBlock.horizontalOnly){
-                            if(!currentBlock.isHorizontal(getBlock(adjX,adjY))){
-                                okayToParent = false;
-                            }
-                        }
-
-                        if(okayToParent){
-                            //setting the parent will also calculate the g_score
-                            getBlock(adjX,adjY).setParent(currentBlock);
-
-                            //add it to the open list since all is well
-                            getBlock(adjX,adjY).open = true;
-                            getBlock(adjX,adjY).closed = false;
-                        }
-                    }else{//if there is a competing parent
-                        //See if it's g value is improved
-                        //by going through us. If so, parent it to us.
-                        //this will set the block's g score and f score since it has all it needs
-                        double g_score_through_us = p_Block.calc_g_score(currentBlock,getBlock(adjX,adjY));
-
-                        boolean isOkayToOverride = true;
-                        for(p_Block iterBlock: allBlocks){
-                            if(iterBlock.invalid){
-                                if(currentBlock.isCutCorner(getBlock(adjX,adjY),iterBlock)){
-                                    isOkayToOverride = false;
-                                }
-                            }
-                        }
-                        if(g_score_through_us < getBlock(adjX,adjY).g_score && isOkayToOverride){
-                            //getBlock(adjX,adjY).m_parent.open = true;
-                            //getBlock(adjX,adjY).m_parent.closed = false;
-
-                            getBlock(adjX,adjY).setParent(currentBlock);
-                        }
+                    }
+                    double newMovementCost = p_Block.calc_g_score(currentBlock,getBlock(adjX,adjY));
+                    if((newMovementCost < getBlock(adjX,adjY).g_score || getBlock(adjX,adjY).m_parent == null) && okayToParent){
+                        //setting the parent will also calculate the g_cost and f_cost
+                        //it will also mark this block as open
+                        getBlock(adjX,adjY).setParent(currentBlock);
                     }
                 }
             }

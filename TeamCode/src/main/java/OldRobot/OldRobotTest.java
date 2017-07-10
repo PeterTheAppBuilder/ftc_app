@@ -30,7 +30,7 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
 TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-package org.firstinspires.ftc.teamcode;
+package OldRobot;
 
 import android.os.SystemClock;
 
@@ -49,6 +49,7 @@ import com.qualcomm.robotcore.util.Range;
 
 import org.opencv.core.Point;
 
+import OldRobot.Globals;
 import ftc.pathfinder.pathFinder;
 import ftc.vision.FrameGrabber;
 
@@ -207,7 +208,8 @@ public class OldRobotTest extends OpMode {
             int ballX = FrameGrabber.bestBallX;
             int ballY = FrameGrabber.bestBallY;
 
-            ballYRelativeToRobot = 24.24642f + ((53715410 - 24.24642) / (1 + Math.pow((ballY / 0.0006110034f), 1.019436)));
+            ballYRelativeToRobot = 16.40639 + ((140765900 - 16.40639) / (1 + Math.pow((ballY / 0.002833515), 1.330388)));
+            ballYRelativeToRobot *= 2.54;
             double cameraViewSizeAtY = (1.259259 * ballYRelativeToRobot) + 23.85185;
             double cameraCenterViewSizeAtY = cameraViewSizeAtY / 2.0;
             ballXRelativeToCenterPercent = (ballX - (screenXSize / 2.0f)) / (screenXSize / 2.0f);
@@ -514,9 +516,8 @@ public class OldRobotTest extends OpMode {
                 //reset the path-finding state machine to look for the next point
                 goToBallStage++;
                 goToBallStepStage = 0;
+                goToBallStepStageFinished = true;
             }
-
-
             if (Break) {
                 wheelRight.setPower(0.0f);
                 wheelLeft.setPower(0.0f);
@@ -533,6 +534,15 @@ public class OldRobotTest extends OpMode {
     //this state-machine variable records if we are currently turning to the step point
     //or moving. 0 = turning, and 1 = moving
     int goToBallStepStage = 0;
+    //allows us to initialize variables inside the mini state machine for one update
+    boolean goToBallStepStageFinished = true;
+    double ballXAbsolute;
+    double ballYAbsolute;
+
+    //the path follower calculates the angle to each step point and needs
+    //to remember it between turns and moves
+    double AngleToStepPoint = 0.0;
+
     //records distance to the step point calculated in the turn before the move
     //to step point
     private double distanceToStepPoint;
@@ -585,7 +595,7 @@ public class OldRobotTest extends OpMode {
 
         Aim_and_trigger_servo_movement();
 
-        /*
+
 
         telemetry.addLine()
                 .addData("Ballx", FrameGrabber.bestBallX)
@@ -595,7 +605,7 @@ public class OldRobotTest extends OpMode {
                 .addData("BallYAbsolute", ballYRelativeToRobot)
                 .addData("Size", FrameGrabber.bestBallRadius);
         telemetry.addData("wallDetectorReading", wallDetector.cmUltrasonic());
-        */
+
         newTestBallFinderFunction();
 
 
@@ -696,12 +706,16 @@ public class OldRobotTest extends OpMode {
                 double myPositionX = (worldXPosition/fieldLength)*24;
                 double myPositionY = (worldYPosition/fieldLength)*24;
 
-                float phoneAngle = worldAngle_rad;//AngleWrap(worldAngle_rad-(float) Math.toRadians(180.0f));
-                double ballXAbsolute = Math.cos(phoneAngle)*currentLockYPositionToRobot;
-                double ballYAbsolute = Math.sin(phoneAngle)*currentLockYPositionToRobot;
+
+                float phoneAngle = (float) currentLockAngleToVision_rad;//AngleWrap(worldAngle_rad-(float) Math.toRadians(180.0f));
+                ballXAbsolute = Math.cos(phoneAngle)*currentLockYPositionToRobot;
+                ballYAbsolute = Math.sin(phoneAngle)*currentLockYPositionToRobot;
 
                 ballXAbsolute += worldXPosition;
                 ballYAbsolute += worldYPosition;
+                //ballXAbsolute += Math.cos(worldAngle_rad)*17*2.54;
+                //ballYAbsolute += Math.sin(worldAngle_rad)*17*2.54;
+
                 ballXAbsolute = (ballXAbsolute/fieldLength)*24;
                 ballYAbsolute = (ballYAbsolute/fieldLength)*24;
                 telemetry.addLine().addData("BallXAbs",ballXAbsolute)
@@ -721,19 +735,27 @@ public class OldRobotTest extends OpMode {
 
             //Execute the path-following state machine only if the stage is less than the number
             //of steps and the steps have been computed in the pathfinder
-            if(goToBallStage < pathFinder.m_filteredSteps.size()-1 && pathFinder.m_filteredSteps != null){
+            if(goToBallStage < pathFinder.m_filteredSteps.size() && pathFinder.m_filteredSteps != null){
                 if(goToBallStepStage == 0){
-                    Point thisStep = pathFinder.m_filteredSteps.get(goToBallStage+1);
+                    if(goToBallStepStageFinished){
+                        goToBallStepStageFinished = false;
+                    }
+
+
+
+                    Point thisStep = pathFinder.m_filteredSteps.get(goToBallStage);
                     //calculate the x position of the pathfinder's step by dividing it by the
                     //pathfinder's field size and multiplying it by our field size
 
                     double thisStepX = (thisStep.x/24)*fieldLength;
                     double thisStepY = (1-(thisStep.y/24))*fieldLength;
 
+
+
                     //of course when calculating angles, we need the step position relative to us
                     double deltaXPoint = thisStepX-worldXPosition;
                     double deltaYPoint = thisStepY-worldYPosition;
-                    double AngleToStepPoint = Math.atan2(deltaYPoint,deltaXPoint);
+                    AngleToStepPoint = Math.atan2(deltaYPoint,deltaXPoint);
 
                     distanceToStepPoint = Math.sqrt(Square((float) deltaXPoint)+Square((float) deltaYPoint));
 
@@ -741,12 +763,19 @@ public class OldRobotTest extends OpMode {
 
                     //move to the angle calculated but don't advance the state since we are in a mini state machine
                     //the turn function will increment our goToBallStepStage variable to go to the next stage
-                    MoveToAngleAbsolute((float) AngleToStepPoint,(float) Math.toRadians(15.0f),0.15f,2,false,true,programStage);
+                    MoveToAngleAbsolute((float) AngleToStepPoint,(float) Math.toRadians(50.0f),0.15f,2,false,true,programStage);
                 }
                 if(goToBallStepStage == 1){
-
-                    move((float) distanceToStepPoint,true,0.2f,0.3f,true,30.0f);
+                    if(goToBallStepStageFinished){
+                        initializeStateVariables();
+                        goToBallStepStageFinished = false;
+                    }
+                    move((float) distanceToStepPoint,true,0.5f,0.3f,true,30.0f);
                 }
+            }
+            //if we have completed all the stages in path following, stop the motors
+            if(goToBallStage == pathFinder.m_filteredSteps.size()){
+                stopMotors();
             }
         }
 
@@ -854,6 +883,7 @@ public class OldRobotTest extends OpMode {
                 .addData("X: ", worldXPosition)
                 .addData(" Y: ", worldYPosition)
                 .addData(" ∠: ", Math.toDegrees(worldAngle_rad));
+
 
 
 
@@ -1200,6 +1230,7 @@ public class OldRobotTest extends OpMode {
             //if we are in the path following stage, incrememnt that state-machine variable
             if(programStage == progStates.pathFollowingStage){
                 goToBallStepStage++;
+                goToBallStepStageFinished = true;
                 initializeStateVariables();
             }
         }

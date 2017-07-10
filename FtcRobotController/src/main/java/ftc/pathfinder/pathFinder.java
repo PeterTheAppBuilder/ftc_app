@@ -4,12 +4,15 @@ import android.os.SystemClock;
 
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
+import org.opencv.core.Scalar;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 
 import ftc.vision.FrameGrabber;
+
+import static org.opencv.imgproc.Imgproc.line;
 
 /**
  * Created by Administrator on 7/3/2017.
@@ -22,45 +25,15 @@ public class pathFinder {
         m_grid = new grid(fieldMap.cols(),fieldMap.rows());
     }
 
-    public static void calcPathStep(){
-        m_grid.calcPathStep();
-    }
-    public static void calcPathStart(int my_X, int my_Y, int target_X, int target_Y){
-        m_grid.setTarget(target_X,target_Y);
-
-
-
-        //loop through all of this pixels which are coded with different colors that apply different
-        //constraints
-        //for example, obstacles are coded by the color white
-        double[] obstacle = {255,255,255};
-
-        //these color values specify if the robot can only move in one direction while over them
-        //that way it will not approach wall balls from angles that the collector can't handle
-        double[] allowsOnlyVertical = {255,0,0};
-        double[] allowsOnlyHorizontal = {0,0,255};
-
-        for(int r = 0; r < fieldMap.cols();r++){
-            for(int c = 0; c < fieldMap.rows();c++){
-                double[] thisPixel = fieldMap.get(c,r);
-                if(Arrays.equals(thisPixel,obstacle)){
-                    m_grid.setObstacle(r,c);
-                }
-                if(Arrays.equals(thisPixel,allowsOnlyHorizontal)){
-                    m_grid.setOnlyHorizontal(r,c);
-                }
-                if(Arrays.equals(thisPixel,allowsOnlyVertical)){
-                    m_grid.setOnlyVertical(r,c);
-                }
-
-            }
-        }
-        m_grid.calcStart(my_X,my_Y);
-    }
-
     public static ArrayList<Point> m_filteredSteps;
 
+    public static double[] obstacle = {255,255,255};
+    //these color values specify if the robot can only move in one direction while over them
+    //that way it will not approach wall balls from angles that the collector can't handle
+    public static double[] allowsOnlyVertical = {255,0,0};
+    public static double[] allowsOnlyHorizontal = {0,0,255};
     public static ArrayList<Point> calcPath(int my_X, int my_Y, int target_X, int target_Y){
+
 
         long timeStart = SystemClock.uptimeMillis();
 
@@ -74,12 +47,9 @@ public class pathFinder {
         //loop through all of this pixels which are coded with different colors that apply different
         //constraints
         //for example, obstacles are coded by the color white
-        double[] obstacle = {255,255,255};
 
-        //these color values specify if the robot can only move in one direction while over them
-        //that way it will not approach wall balls from angles that the collector can't handle
-        double[] allowsOnlyVertical = {255,0,0};
-        double[] allowsOnlyHorizontal = {0,0,255};
+
+
 
         for(int r = 0; r < fieldMap.cols();r++){
             for(int c = 0; c < fieldMap.rows();c++){
@@ -97,48 +67,80 @@ public class pathFinder {
             }
         }
         m_grid.findPath(my_X,my_Y);
-        ArrayList<Point> pointSteps =  m_grid.m_steps;
+        ArrayList<stepPoint> pointSteps =  m_grid.m_steps;
         ArrayList<Point> filteredSteps = new ArrayList<>();
-        //go through all of the points in the 2d point array and filter them into key points
-        //that way we only worry about the points that represent changes in direction, and
-        //not the ones that are co-linear.
-        Point lastPoint = new Point(-1,-1);
-        double lastDirection = -0.1;
-        double currentDirection;
-        for(Point p: pointSteps){
-            //compare the current slope between the solved points and see if it has changed,
-            //meaning that the direction of the path has changed. If so, mark it. Otherwise,
-            //do nothing because the movement is the same as before.
 
-            //this would cause a divide by zero in the slope calculation
-            //so set it to a constant high number. Otherwise, calculate
-            //the slope normally
-            if(p.x-lastPoint.x == 0.0){
-                currentDirection = 999;
-            }else{
-                currentDirection = (p.y-lastPoint.y)/(p.x-lastPoint.x);
+        //start at the first point, since it is in reverse order
+        stepPoint currentPoint = pointSteps.get(0);
+        boolean finished = false;
+
+
+        int currentMandatoryPointIndex = pointSteps.size()+10;
+        for(int i =0;i<pointSteps.size();i++){
+            if(pointSteps.get(i).mandatory){
+                currentMandatoryPointIndex = i;
+                break;
             }
-            if(currentDirection != lastDirection){
-                filteredSteps.add(lastPoint);
+        }
+
+        for(;;){
+            //go in backwards order through the ArrayList of points
+            for(int i=pointSteps.size()-1; i>=0;i--){
+                int obsticalCountBefore = countObsticals(fieldMap);
+                Mat collisionLineMat = fieldMap.clone();
+                //draw a line from the current point to the finish
+                //if it cuts through any obsticals, there will be less
+                //obstical pixels after drawing a line from start to finish
+                line(collisionLineMat,currentPoint.p,pointSteps.get(i).p,new Scalar(0,0,0));
+                int obsticalCountAfter = countObsticals(collisionLineMat);
+                collisionLineMat.release();
+                if(obsticalCountBefore == obsticalCountAfter && i <= currentMandatoryPointIndex){
+                    if(i==currentMandatoryPointIndex){
+                        currentMandatoryPointIndex = pointSteps.size()+10;
+                        for(int j =i+1;j<pointSteps.size();j++){
+                            if(pointSteps.get(j) != null){
+                                if(pointSteps.get(j).mandatory){
+                                    currentMandatoryPointIndex = j;
+                                }
+                            }
+                        }
+                    }
+
+
+                    //if we can get to this point in a straight line
+                    //without going through any obsticals, add it to the step list
+                    currentPoint = pointSteps.get(i);
+                    filteredSteps.add(pointSteps.get(i).p);
+                    //if we have gotten to the finish line
+                    if(i == pointSteps.size()-1){
+                        finished = true;
+                    }
+                    break;
+                }
             }
-
-
-            lastPoint = p;
-            lastDirection = currentDirection;
-
+            if(finished){break;}
         }
-        //the step list may not include the final point, so add it to the
-        //list of filtered points if it didn't already
-        if(!filteredSteps.contains(new Point(target_X,target_Y))){
-            filteredSteps.add(new Point(target_X,target_Y));
-        }
-        m_filteredSteps = filteredSteps;
+
+
 
         FrameGrabber.findTime = SystemClock.uptimeMillis()-timeStart;
 
 
 
+        m_filteredSteps = filteredSteps;
         return filteredSteps;
+    }
+    public static int countObsticals(Mat map){
+        int obsticals = 0;
+        for(int r = 0; r < map.cols();r++){
+            for(int c = 0; c < map.rows();c++){
+                double[] thisPixel = map.get(c,r);
+                if(Arrays.equals(thisPixel,obstacle)){
+                    obsticals++;
+                }
+            }
+        }
+        return obsticals;
     }
 
 }

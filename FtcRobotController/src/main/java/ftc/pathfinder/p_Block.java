@@ -49,7 +49,7 @@ public class p_Block {
     public void setParent(p_Block parent){
         m_parent = parent;
         g_score = calc_g_score(parent,this);
-
+        open = true;
         if(h_score != -1){//if our h score has been set, we can calculate our f_score
             f_score = h_score+g_score;
         }
@@ -81,7 +81,7 @@ public class p_Block {
             }
 
             if(slopeAfter!=slopeBefore){
-                //g_score_sum += 1000;
+                g_score_sum += 1.9;
             }
         }
 
