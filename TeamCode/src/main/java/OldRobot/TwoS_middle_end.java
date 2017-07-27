@@ -36,6 +36,7 @@ import android.os.SystemClock;
 
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsAnalogOpticalDistanceSensor;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -65,6 +66,7 @@ import OldRobot.MyTeleOp;
  */
 
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="Shoot 2, End on Middle", group="Iterative Opmode")  // @Autonomous(...) is the other common choice
+@Disabled
 
 public class TwoS_middle_end extends OpMode
 {

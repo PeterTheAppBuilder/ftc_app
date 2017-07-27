@@ -116,8 +116,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Semaphore;
 
 import ftc.pathfinder.pathFinder;
+import ftc.pathfinder.pathFinderNative;
 import ftc.vision.FrameGrabber;
 import ftc.vision.cameraSettings;
 
@@ -371,13 +373,10 @@ public class FtcRobotControllerActivity extends Activity {
 
 
     try {
-      pathFinder.fieldMap = Utils.loadResource(this, R.drawable.fieldmap, Imgcodecs.CV_LOAD_IMAGE_COLOR);
-      cvtColor(pathFinder.fieldMap,pathFinder.fieldMap,COLOR_BGR2RGB);
-      pathFinder.createGrid();
-      //FrameGrabber.canStart  = true;
-      pathFinder.calcPath(0,11,0,5);
-
-
+      pathFinderNative.fieldMap = Utils.loadResource(this, R.drawable.fieldmap, Imgcodecs.CV_LOAD_IMAGE_COLOR);
+      cvtColor(pathFinderNative.fieldMap,pathFinderNative.fieldMap,COLOR_BGR2RGB);
+      pathFinderNative test = new pathFinderNative();
+      test.execute(12.0,0.0,11.0,24.0,24.0,0.0);
     } catch (IOException e) {
       e.printStackTrace();
     }

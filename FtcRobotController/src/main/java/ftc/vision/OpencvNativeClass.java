@@ -9,9 +9,10 @@ import org.opencv.core.Point;
 public class OpencvNativeClass {
     static int bestBallX = 0;
     static int bestBallY = 0;
+    static int bestBallXAbs = 0;
+    static int bestBallYAbs = 0;
     static float bestBallRadius = 0;
-    public native static void convertGray(long matAddrRgba, long matAddr,boolean blueside);
+    public native static void findBalls(long matAddrRgba, long matAddr,boolean blueside);
     public native static void calibrate();
-
 
 }

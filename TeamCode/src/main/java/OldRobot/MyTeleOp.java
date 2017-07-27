@@ -36,6 +36,7 @@ import android.os.SystemClock;
 
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsAnalogOpticalDistanceSensor;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.ColorSensor;
@@ -63,6 +64,7 @@ import com.qualcomm.robotcore.util.Range;
  */
 
 @TeleOp(name="MyTeleOp: MyTeleOp2", group="Iterative Opmode")  // @Autonomous(...) is the other common choice
+@Disabled
 
 public class MyTeleOp extends OpMode
 {

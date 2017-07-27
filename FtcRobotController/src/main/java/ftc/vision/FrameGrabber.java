@@ -1,27 +1,20 @@
 package ftc.vision;
 
 import android.os.SystemClock;
+import android.util.Log;
 import android.view.SurfaceView;
 
-import com.qualcomm.ftcrobotcontroller.R;
-
-import org.firstinspires.ftc.robotcontroller.internal.FtcRobotControllerActivity;
 import org.opencv.android.CameraBridgeViewBase;
-import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
-import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
 
-import java.io.IOException;
-import java.util.Arrays;
-
-import ftc.pathfinder.grid;
 import ftc.pathfinder.p_Block;
 import ftc.pathfinder.pathFinder;
+import ftc.pathfinder.pathFinderNative;
 
 import static org.opencv.core.CvType.CV_8UC4;
-import static org.opencv.imgproc.Imgproc.COLOR_BGR2RGB;
 import static org.opencv.imgproc.Imgproc.circle;
 import static org.opencv.imgproc.Imgproc.cvtColor;
 import static org.opencv.imgproc.Imgproc.line;
@@ -37,8 +30,7 @@ public class FrameGrabber implements
     @Override
     public void onCameraViewStarted(int width, int height) {
         mRgba = new Mat(height,width, CV_8UC4);
-        mGray = new Mat(height,width,CV_8UC4);
-        drawingImage = new Mat(height,width, CV_8UC4);
+        drawingImage = new Mat(height,width,CV_8UC4);
     }
 
     @Override
@@ -69,7 +61,7 @@ public class FrameGrabber implements
 
 
 
-    static Mat mRgba, drawingImage, mGray;
+    public static Mat mRgba, drawingImage;
 
 
 
@@ -85,15 +77,10 @@ public class FrameGrabber implements
     }
 
 
-
-    public final float blobDistanceThreshold = 200;
-    public final float ScanningResolution = 16;
-
     static{
         System.loadLibrary("MyOpencvLibs");
     }
 
-    public static String cameraReturnString = null;
     Mat blankMat;
     public static boolean blueside = true;
 
@@ -102,18 +89,26 @@ public class FrameGrabber implements
 
     public static double x = 0;
     public static double y =0;
+    public static double bestBallX_abs = 0;
+    public static double bestBallY_abs = 0;
+    public static double step_x = 0;
+    public static double step_y = 0;
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
 
-
         mRgba.release();
         mRgba = inputFrame.rgba();
+        if(drawingImage != null){drawingImage.release();}
 
 
-        rectangle(mGray,new Point(0,0),new Point(mGray.cols(),mGray.rows()),new Scalar(0,0,0),-1);
 
 
-        //OpencvNativeClass.convertGray(mRgba.getNativeObjAddr(),mGray.getNativeObjAddr(),blueside);
+        ///////////////////////////////Find the balls in cpp//////////////////////////////////////////
+        OpencvNativeClass.findBalls(mRgba.getNativeObjAddr(),drawingImage.getNativeObjAddr(),blueside);
+        ////////////////////////////////////////////////////////////////////////////////////////////
+        //let the pathfinder draw its path on us
+        pathFinderNative.drawPath(drawingImage.getNativeObjAddr(),14);
+
         bestBallX = OpencvNativeClass.bestBallX;
         bestBallY = OpencvNativeClass.bestBallY;
         bestBallRadius = OpencvNativeClass.bestBallRadius;
@@ -124,70 +119,50 @@ public class FrameGrabber implements
 
 
 
-        rectangle(mGray,new Point(bestBallX - (bestBallRadius/2.0f),bestBallY - (bestBallRadius/2.0f)),
-                new Point(bestBallX + (bestBallRadius/2.0f),bestBallY+(bestBallRadius/2.0f)),
-                new Scalar(255,0,0,1),5);
+        Point ball = new Point(((bestBallX_abs/fieldLength)*24)*20,((bestBallY_abs/fieldLength)*24)*20);
+        rectangle(drawingImage,ball,new Point(ball.x+20,ball.y+20),new Scalar(255,255,0),-1);
 
-        int scale = 20;
+        Point us = new Point((x/fieldLength)*24*20,((1-(y/fieldLength))*24)*20);
+        circle(drawingImage,us,6,new Scalar(0,255,0),5);
 
-        if(pathFinder.m_grid != null){
-            rectangle(mGray,new Point(0,0),new Point(pathFinder.m_grid.m_rows*scale,pathFinder.m_grid.m_cols*scale),
-                    new Scalar(100,100,255),4);
-            rectangle(mGray,new Point(pathFinder.m_grid.m_targetX*scale,pathFinder.m_grid.m_targetY*scale),
-                    new Point((pathFinder.m_grid.m_targetX *scale)+scale,(pathFinder.m_grid.m_targetY*scale)+scale),
-                    new Scalar(255,255,255),-1);
-            for(p_Block iterBlock: pathFinder.m_grid.allBlocks){
-                if(iterBlock.invalid){
-                    rectangle(mGray,new Point(iterBlock.x*scale,iterBlock.y*scale),
-                            new Point((iterBlock.x *scale)+scale,(iterBlock.y*scale)+scale),new Scalar(255,0,0),1);
-                }
-                if(iterBlock.open){
-                    rectangle(mGray,new Point(iterBlock.x*scale,iterBlock.y*scale),
-                            new Point((iterBlock.x *scale)+scale,(iterBlock.y*scale)+scale),new Scalar(0,255,0),1);
-                }
-                if(iterBlock.closed){
-                    rectangle(mGray,new Point(iterBlock.x*scale,iterBlock.y*scale),
-                            new Point((iterBlock.x *scale)+scale,(iterBlock.y*scale)+scale),new Scalar(193,40,236),-1);
-                }
-                if(iterBlock.m_parent != null && iterBlock.closed){
-                    line(mGray,new Point(iterBlock.x*scale,iterBlock.y*scale),
-                            new Point(iterBlock.m_parent.x*scale,iterBlock.m_parent.y*scale),new Scalar(255,255,0),3);
-                }
+        Point thisStep = new Point((step_x/fieldLength)*24*20,((1-(step_y/fieldLength))*24)*20);
 
-                putText(mGray,Integer.toString((int) iterBlock.g_score),new Point(iterBlock.x*scale,iterBlock.y*scale),1,1,new Scalar(160,160,255));
-                putText(mGray,Integer.toString((int) iterBlock.f_score),new Point(iterBlock.x*scale,(iterBlock.y*scale)+20),1,1,new Scalar(255,160,160));
-
-
-
-            }
-
-            if(pathFinder.m_filteredSteps != null){
-                int i = 0;
-                for(Point thisStepPoint: pathFinder.m_filteredSteps){
-                    putText(mGray,Integer.toString(i),new Point(thisStepPoint.x*scale,thisStepPoint.y*scale),1,5,new Scalar(255,255,255));
-                    i++;
-                }
-                putText(mGray,Long.toString(findTime),new Point(50,50),1,4,new Scalar(255,255,255));
-            }
-
-        }
+        circle(drawingImage,thisStep,6,new Scalar(255,255,255),5);
 
 
 
 
-        double x_screen = x/315.0f;
-        double y_screen = 1-(y/315.0f);
-        x_screen*=scale*25;
-        y_screen*=scale*25;
-        circle(mGray,new Point(x_screen,y_screen),3,new Scalar(0,255,0),3);
+
+
+        //putText(drawingImage,"X: " + bestBallX + " Y: " + bestBallY,new Point(50,50),1,5,new Scalar(0,255,0),2);
 
 
 
-        return mGray;
+        //rectangle(drawingImage,new Point(bestBallX - (bestBallRadius/2.0f),bestBallY - (bestBallRadius/2.0f)),
+        //        new Point(bestBallX + (bestBallRadius/2.0f),bestBallY+(bestBallRadius/2.0f)),
+        //        new Scalar(255,0,0,1),5);
 
+        return drawingImage;
     }
     public static boolean uptoDate = false;
 
+    public static double fieldLength = 358.775;
+    public static Point calcScreenPosI(Point fieldPos){
+        Point percent = new Point(fieldPos.x/fieldLength,1-(fieldPos.y/fieldLength));
+        percent = new Point((int) (percent.x * 24),(int) (percent.y * 24));
+        return percent;
+    }
+    public static Point calcScreenPos(Point fieldPos){
+        Point percent = new Point(fieldPos.x/fieldLength,1-(fieldPos.y/fieldLength));
+        percent = new Point((percent.x * 24), (percent.y * 24));
+        return percent;
+    }
+    public static Point multPoint(Point p, double x){
+        return new Point(p.x*x,p.y*x);
+    }
+    public static Point addPoint(Point p, Point x){
+        return new Point(p.x+x.x,p.y+x.y);
+    }
 
 
 

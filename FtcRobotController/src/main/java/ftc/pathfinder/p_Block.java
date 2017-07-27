@@ -32,6 +32,9 @@ public class p_Block {
     //a parent block cost more than ones that are straight up or down.
     public double g_score = -1.0;
 
+    //this is a predefined movement penalty set by the field map.
+    public double pre_g_score = 0;
+
 
     public double f_score = -1.0;//the sum of our g and h score
 
@@ -84,6 +87,7 @@ public class p_Block {
                 g_score_sum += 1.9;
             }
         }
+        g_score_sum += block2.pre_g_score;
 
 
         return g_score_sum;
@@ -119,12 +123,6 @@ public class p_Block {
     }
 
 
-    public boolean samePos(p_Block otherBlock){
-        if(this.x == otherBlock.x && this.y == otherBlock.y){
-            return true;
-        }
-        return false;
-    }
 
     public boolean isHorizontal(p_Block otherBlock){
         if(otherBlock.y == this.y && Math.abs(this.x-otherBlock.x) == 1){

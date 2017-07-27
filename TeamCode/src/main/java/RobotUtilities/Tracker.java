@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package RobotUtilities;
 
 import com.qualcomm.robotcore.hardware.AnalogInput;
 
@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.hardware.AnalogInput;
 
 public class Tracker {
     AnalogInput m_encoder;
-    public static final double All_telemetry_trackers_wrapAroundThreshold = 0.3;
+    public static final double All_telemetry_trackers_wrapAroundThreshold = 0.45;
     public static final double limit_top = 1;
     public static final double limit_bot = 0;
 

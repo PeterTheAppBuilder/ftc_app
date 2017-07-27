@@ -9,7 +9,7 @@
 	OPENCV_LIB_TYPE:=SHARED
 	include ${OPENCVROOT}/sdk/native/jni/OpenCV.mk
 
-	LOCAL_SRC_FILES := ftc_vision_OpencvNativeClass.cpp Blob.cpp
+	LOCAL_SRC_FILES := ftc_vision_OpencvNativeClass.cpp p_Block.cpp grid.cpp stepPoint.cpp pathFinder_I.cpp
 
 	LOCAL_LDLIBS += -llog
 	LOCAL_MODULE := MyOpencvLibs

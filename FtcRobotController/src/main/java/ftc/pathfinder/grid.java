@@ -178,9 +178,6 @@ public class grid {
                         isOkay = false;
                     }
                 }
-                //check if moving to this block would violate a down, left,
-                // up, or right only constraint. If so, don't move there
-
 
 
                 if(thisBlock.f_score < lowestFScore && isOkay){

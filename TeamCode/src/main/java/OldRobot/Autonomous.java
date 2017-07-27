@@ -47,6 +47,7 @@ import android.os.SystemClock;
 
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsAnalogOpticalDistanceSensor;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -73,13 +74,11 @@ import com.qualcomm.robotcore.util.Range;
  */
 
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="Everythinig Auto", group="Iterative Opmode")  // @Autonomous(...) is the other common choice
+@Disabled
 
 public class Autonomous extends OpMode
 {
     boolean debugMode = false;
-
-
-
 
     ////////////////////DEFINE VARIABLES//////////////////////////////////////
 

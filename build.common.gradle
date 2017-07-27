@@ -77,7 +77,6 @@ android {
             }
         }
         debug {
-            debuggable true
             ndk {
                 abiFilters "armeabi-v7a"
             }
@@ -100,5 +99,6 @@ repositories {
         dirs rootProject.file('libs')
     }
 }
+
 
 apply from: 'build.release.gradle'
